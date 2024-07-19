@@ -1,7 +1,9 @@
 name: Run Scraper
 
 on:
-  workflow_dispatch:  # Permite execução manual
+  schedule:
+    - cron: '0 */12 * * *'  # Executa a cada 12 horas
+  workflow_dispatch:
 
 jobs:
   run-scraper:
@@ -14,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'  # Substitua pela versão do Node.js que você está usando
+          node-version: '18.17.1'
 
       - name: Install dependencies
         run: npm install
