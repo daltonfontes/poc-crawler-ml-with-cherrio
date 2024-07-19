@@ -3,7 +3,6 @@ import * as cheerio from 'cheerio';
 import { BASE_URL, MAX_PAGES } from './config.js';
 import { sanitizeText } from './utils.js';
 import { saveToDatabase } from './db.js';
-import { queue } from 'async';
 
 async function scrapePage(url) {
   try {
@@ -38,33 +37,22 @@ async function scrapePage(url) {
 
 function getNextPageUrl($) {
   const nextPageButton = $('a.andes-pagination__link[title="Próxima"]').attr('href');
-  return nextPageButton ? `https://www.mercadolivre.com.br${nextPageButton}` : null;
+  return nextPageButton ? nextPageButton : null;
 }
 
 export async function scrapeAllPages() {
-  const q = queue(async (url, callback) => {
-    const { itemList, $ } = await scrapePage(url);
-    saveToDatabase(itemList);
-    callback(null, $);
-  }, 2);
-
   let currentPageUrl = BASE_URL;
   let pageCount = 0;
 
-  q.drain(() => {
-    console.log('Raspagem completa.');
-  });
-
   while (currentPageUrl && pageCount < MAX_PAGES) {
-    q.push(currentPageUrl, (err, $) => {
-      if ($) {
-        currentPageUrl = getNextPageUrl($);
-      } else {
-        currentPageUrl = null;
-      }
-    });
+    const { itemList, $ } = await scrapePage(currentPageUrl);
+    saveToDatabase(itemList);
+
+    currentPageUrl = getNextPageUrl($);
     pageCount++;
+
+    console.log(`Página ${pageCount}: ${currentPageUrl}`);
   }
 
-  await q.drain();
+  console.log('Raspagem completa.');
 }

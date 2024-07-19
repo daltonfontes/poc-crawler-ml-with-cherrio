@@ -2,12 +2,20 @@ import { initializeDatabase, closeDatabase } from './db.js';
 import { scrapeAllPages } from './scrapper.js';
 
 async function main() {
-  initializeDatabase();
+  try {
 
-  await scrapeAllPages();
+    initializeDatabase();
 
-  console.log('Dados salvos!!');
-  closeDatabase();
+    await scrapeAllPages();
+
+    console.log('Dados salvos!!');
+
+  } catch (error) {
+    console.error('Ocorreu um erro:', error);
+  } finally {
+    closeDatabase();
+  }
+
 }
 
 main();

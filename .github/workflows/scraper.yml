@@ -2,7 +2,7 @@ name: Run Scraper
 
 on:
   schedule:
-    - cron: '0 */12 * * *'  # Executa a cada 12 horas
+    - cron: '0 0 * * *'  # Executa a cada 24 horas (meia-noite UTC)
   workflow_dispatch:
 
 jobs:

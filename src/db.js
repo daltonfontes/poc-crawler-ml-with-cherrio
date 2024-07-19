@@ -1,6 +1,6 @@
 import sqlite3 from 'sqlite3';
 
-const db = new sqlite3.Database('scraping_data.db');
+const db = new sqlite3.Database('data.db');
 
 export function initializeDatabase() {
   db.serialize(() => {
@@ -10,24 +10,39 @@ export function initializeDatabase() {
         name TEXT,
         price TEXT,
         image TEXT,
-        link TEXT
+        link TEXT UNIQUE
       )
     `);
   });
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_products_name ON products (name)
+  `);
+
+  db.run(`
+    CREATE INDEX IF NOT EXISTS idx_products_link ON products (link)
+  `);
 }
 
 export function saveToDatabase(items) {
   db.serialize(() => {
-    const stmt = db.prepare(`
+    db.run('BEGIN TRANSACTION');
+
+    const insertOrUpdateStmt = db.prepare(`
       INSERT INTO products (name, price, image, link)
       VALUES (?, ?, ?, ?)
+      ON CONFLICT(link) DO UPDATE SET
+        name = excluded.name,
+        price = excluded.price,
+        image = excluded.image
     `);
 
     items.forEach(item => {
-      stmt.run(item.name, item.price, item.image, item.link);
+      insertOrUpdateStmt.run(item.name, item.price, item.image, item.link);
     });
 
-    stmt.finalize();
+    insertOrUpdateStmt.finalize();
+    db.run('COMMIT');
   });
 }
 
